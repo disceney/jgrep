@@ -3,8 +3,10 @@
 /CLAUDE.md
 ###< arlette/claude-code ###
 
+###> project ###
 /node_modules/
 /dist/
 /.idea/
 /.DS_Store
 /.env
+###< project ###
