@@ -1,6 +1,4 @@
 export interface FgrepConfig {
-	include: string[]
-	exclude: string[]
 	model: string
 	topK: number
 	chunkSize: number

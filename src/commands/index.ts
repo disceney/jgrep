@@ -32,7 +32,7 @@ async function runBuild(cwd: string, label?: string): Promise<IndexData> {
 
 	console.log(`\n${tag}${pc.bold('Indexing')} ${pc.dim(cwd)}`)
 
-	const files = await walkFiles(cwd, config)
+	const files = await walkFiles(cwd)
 
 	const index = await buildIndexIncremental(cwd, config, null, makeProgress(files.length))
 

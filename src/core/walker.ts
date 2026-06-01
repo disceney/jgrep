@@ -1,11 +1,10 @@
 import { globby } from 'globby'
-import type { FgrepConfig } from '../types.js'
 
-export async function walkFiles(cwd: string, config: FgrepConfig): Promise<string[]> {
-	return globby(config.include, {
+export async function walkFiles(cwd: string): Promise<string[]> {
+	return globby('**/*', {
 		cwd,
 		gitignore: true,
-		ignore: config.exclude,
+		ignore: ['.jgrep/**', '.git/**'],
 		dot: false,
 		absolute: false,
 		onlyFiles: true,

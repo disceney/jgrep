@@ -31,7 +31,7 @@ export async function buildIndexIncremental(
 ): Promise<IndexData> {
 	const table = await openTable(cwd)
 	const existingHashes = await getFileHashes(table)
-	const files = await walkFiles(cwd, config)
+	const files = await walkFiles(cwd)
 	const currentFileSet = new Set(files)
 
 	const reusedFiles = new Set<string>()
