@@ -7,8 +7,9 @@
 		"jgrep": "dist/cli.js"
 	},
 	"scripts": {
-		"build": "tsup src/cli.ts --format esm --clean",
-		"dev": "tsup src/cli.ts --format esm --watch",
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"prepack": "npm run build",
 		"lint": "eslint src",
 		"format": "prettier --write ."
 	},

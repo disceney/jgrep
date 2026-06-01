@@ -5,7 +5,14 @@ import type { FgrepConfig, IndexData, IndexedChunk } from '../types.js'
 import { chunkFile, chunkFileSmart } from './chunker.js'
 import { embedTexts } from './embeddings.js'
 import { detectLang } from './lang.js'
-import { createFTSIndex, deleteChunksForFile, getFileHashes, getStats, openTable, upsertChunks } from './store.js'
+import {
+	createFTSIndex,
+	deleteChunksForFile,
+	getFileHashes,
+	getStats,
+	openTable,
+	upsertChunks,
+} from './store.js'
 import { walkFiles } from './walker.js'
 
 export type FileStatus = 'reused' | 'embedding' | 'empty'
@@ -96,7 +103,7 @@ export async function buildIndexIncremental(
 	await Promise.all(deletionPromises)
 
 	if (filesToEmbed.length === 0) {
-		return { model: config.model, ...await getStats(table) }
+		return { model: config.model, ...(await getStats(table)) }
 	}
 
 	const allTexts: string[] = []
@@ -126,5 +133,5 @@ export async function buildIndexIncremental(
 	await upsertChunks(table, indexedChunks)
 	await createFTSIndex(table)
 
-	return { model: config.model, ...await getStats(table) }
+	return { model: config.model, ...(await getStats(table)) }
 }

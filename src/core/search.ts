@@ -34,7 +34,10 @@ function fuseWithRRF(
 	return fused
 }
 
-function chunksOverlap(a: { startLine: number; endLine: number }, b: { startLine: number; endLine: number }): boolean {
+function chunksOverlap(
+	a: { startLine: number; endLine: number },
+	b: { startLine: number; endLine: number },
+): boolean {
 	const overlapStart = Math.max(a.startLine, b.startLine)
 	const overlapEnd = Math.min(a.endLine, b.endLine)
 	if (overlapEnd <= overlapStart) return false
@@ -64,10 +67,7 @@ export async function searchIndex(
 
 	if (config.hybridSearch) {
 		// Dense vector search — fetch candidate pool
-		let denseQ = table
-			.vectorSearch(queryEmbedding)
-			.distanceType('cosine')
-			.limit(candidateCount)
+		let denseQ = table.vectorSearch(queryEmbedding).distanceType('cosine').limit(candidateCount)
 
 		if (Array.isArray(opts.langs) && opts.langs.length > 0) {
 			denseQ = denseQ.where("lang IN ('" + opts.langs.join("','") + "')")
@@ -107,10 +107,7 @@ export async function searchIndex(
 		}))
 	} else {
 		// Pure dense vector search (original behaviour)
-		let q = table
-			.vectorSearch(queryEmbedding)
-			.distanceType('cosine')
-			.limit(candidateCount)
+		let q = table.vectorSearch(queryEmbedding).distanceType('cosine').limit(candidateCount)
 
 		if (Array.isArray(opts.langs) && opts.langs.length > 0) {
 			q = q.where("lang IN ('" + opts.langs.join("','") + "')")
@@ -136,9 +133,7 @@ export async function searchIndex(
 
 	// Apply minScore filter
 	const minScore = opts.minScore ?? config.minScore ?? 0
-	const filtered = results
-		.filter((r) => r.score >= minScore)
-		.sort((a, b) => b.score - a.score)
+	const filtered = results.filter((r) => r.score >= minScore).sort((a, b) => b.score - a.score)
 
 	// Deduplicate: cap chunks per file so one file never dominates results;
 	// also skip chunks that overlap significantly with an already-included chunk.

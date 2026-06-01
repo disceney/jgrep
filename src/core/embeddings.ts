@@ -3,7 +3,11 @@ import { VoyageAIClient } from 'voyageai'
 const BATCH_SIZE = 128
 const MAX_CONCURRENT_BATCHES = 3
 
-export async function embedTexts(texts: string[], model: string, apiKey?: string): Promise<number[][]> {
+export async function embedTexts(
+	texts: string[],
+	model: string,
+	apiKey?: string,
+): Promise<number[][]> {
 	const resolvedApiKey = process.env['VOYAGE_API_KEY'] || apiKey
 	if (!resolvedApiKey) {
 		throw new Error('VOYAGE_API_KEY environment variable is not set')

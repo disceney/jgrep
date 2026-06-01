@@ -7,6 +7,10 @@ Les vecteurs sont stockés dans une base [LanceDB](https://lancedb.github.io/lan
 ## Table des matières
 
 - [Installation](#installation)
+  - [Prérequis](#prérequis)
+  - [Installation en une ligne](#installation-en-une-ligne)
+  - [Version spécifique](#version-spécifique)
+  - [Mise à jour](#mise-à-jour)
 - [Démarrage rapide](#démarrage-rapide)
 - [Configuration](#configuration)
   - [Variable d'environnement](#variable-denvironnement)
@@ -24,19 +28,30 @@ Les vecteurs sont stockés dans une base [LanceDB](https://lancedb.github.io/lan
 
 ## Installation
 
+### Prérequis
+
+- **Node.js ≥ 18** — [nodejs.org](https://nodejs.org)
+- **Clé API Voyage AI** — [voyageai.com](https://www.voyageai.com/) (gratuit pour démarrer)
+
+### Installation en une ligne
+
 ```bash
-git clone <repo>
-cd jgrep
-npm install
-npm run build
-npm link
+curl -fsSL https://raw.githubusercontent.com/disceney/jgrep/main/install.sh | bash
 ```
 
-Vérifier que le binaire est disponible :
+Le script vérifie la version de Node.js, télécharge la dernière release depuis GitHub et installe le binaire globalement via `npm install -g`.
+
+### Version spécifique
 
 ```bash
-which jgrep
-jgrep --version
+curl -fsSL https://raw.githubusercontent.com/disceney/jgrep/main/install.sh | bash -s -- v0.2.0
+```
+
+### Mise à jour
+
+```bash
+jgrep update           # installe la dernière version
+jgrep update --check   # vérifie sans installer
 ```
 
 ---
@@ -47,21 +62,16 @@ jgrep --version
 
 ```bash
 cd /path/to/your-project
-jgrep install
-```
-
-Avec une clé API intégrée au fichier de configuration :
-
-```bash
 jgrep install --api-key vo_xxxxxxxxxxxxxxxx
 ```
 
 `jgrep install` réalise automatiquement les opérations suivantes :
 
-1. **Crée `.jgreprc`** à la racine du projet avec la configuration par défaut (et `voyageApiKey` si `--api-key` est fourni).
-2. **Crée le répertoire `.jgrep/`** qui hébergera la base LanceDB.
-3. **Initialise la table LanceDB** dans `.jgrep/`.
-4. **Met à jour `.gitignore`** en y ajoutant le bloc suivant (créé s'il n'existe pas) :
+1. **Détecte le type de projet** (Symfony, Node.js, Rust, Go, Python) et génère un `.jgreprc` avec les exclusions adaptées.
+2. **Crée `.jgreprc`** à la racine du projet avec la configuration par défaut.
+3. **Crée le répertoire `.jgrep/`** qui hébergera la base LanceDB.
+4. **Initialise la table LanceDB** dans `.jgrep/`.
+5. **Met à jour `.gitignore`** en y ajoutant le bloc suivant (créé s'il n'existe pas) :
 
 ```
 ###> jgrep ###
@@ -71,6 +81,13 @@ jgrep install --api-key vo_xxxxxxxxxxxxxxxx
 ```
 
 > **Note :** si `.jgreprc` existe déjà, la commande s'arrête sans écraser. Utilisez `--force` pour forcer le remplacement.
+
+Puis indexez et cherchez :
+
+```bash
+jgrep index
+jgrep "où est gérée l'authentification ?"
+```
 
 ---
 
@@ -90,10 +107,16 @@ La variable d'environnement a **priorité** sur l'option `voyageApiKey` du `.jgr
 
 ### Fichier .jgreprc
 
-Après `jgrep install`, un `.jgreprc` est créé avec les valeurs optimales par défaut :
+Après `jgrep install`, un `.jgreprc` est créé à la racine du projet. Exemple pour un projet Symfony :
 
 ```json
 {
+  "exclude": [
+    "vendor/**",
+    "var/**",
+    "public/bundles/**",
+    "public/build/**"
+  ],
   "model": "voyage-code-3",
   "topK": 10,
   "chunkSize": 40,
@@ -113,20 +136,22 @@ Après `jgrep install`, un `.jgreprc` est créé avec les valeurs optimales par 
 | Option             | Type                   | Défaut            | Description                                                                                 |
 |--------------------|------------------------|-------------------|---------------------------------------------------------------------------------------------|
 | `model`            | `string`               | `"voyage-code-3"` | Modèle d'embedding Voyage AI                                                                |
-| `topK`             | `number`               | `10`                                                                    | Nombre de résultats retournés par défaut                                                    |
-| `chunkSize`        | `number`               | `40`                                                                    | Nombre de lignes par chunk                                                                  |
-| `overlap`          | `number`               | `10`                                                                    | Lignes de recouvrement entre deux chunks adjacents                                          |
-| `minScore`         | `number`               | `0.3`                                                                   | Score minimum (0–1) — filtre les résultats non pertinents                                   |
-| `voyageApiKey`     | `string`               | `""`                                                                    | Clé API Voyage AI (fallback si `VOYAGE_API_KEY` non défini dans l'environnement)            |
-| `rerank`           | `boolean`              | `true`                                                                  | Active le re-ranking via Voyage Rerank après la recherche vectorielle                       |
-| `rerankCandidates` | `number`               | `30`                                                                    | Nombre de candidats récupérés avant re-ranking (doit être ≥ `topK`)                        |
-| `hybridSearch`     | `boolean`              | `true`                                                                  | Active la recherche hybride (vecteurs + BM25 full-text avec fusion RRF)                     |
-| `chunkStrategy`    | `"lines"` \| `"smart"` | `"smart"`                                                              | `lines` : fenêtre fixe ; `smart` : respect des frontières sémantiques (fonctions, classes) |
-| `maxPerFile`       | `number`               | `2`                                                                     | Nombre maximum de chunks retournés par fichier — évite qu'un seul fichier domine            |
+| `topK`             | `number`               | `10`              | Nombre de résultats retournés par défaut                                                    |
+| `chunkSize`        | `number`               | `40`              | Nombre de lignes par chunk                                                                  |
+| `overlap`          | `number`               | `10`              | Lignes de recouvrement entre deux chunks adjacents                                          |
+| `minScore`         | `number`               | `0.3`             | Score minimum (0–1) — filtre les résultats non pertinents                                   |
+| `voyageApiKey`     | `string`               | `""`              | Clé API Voyage AI (fallback si `VOYAGE_API_KEY` non défini dans l'environnement)            |
+| `rerank`           | `boolean`              | `true`            | Active le re-ranking via Voyage Rerank après la recherche vectorielle                       |
+| `rerankCandidates` | `number`               | `30`              | Nombre de candidats récupérés avant re-ranking (doit être ≥ `topK`)                        |
+| `hybridSearch`     | `boolean`              | `true`            | Active la recherche hybride (vecteurs + BM25 full-text avec fusion RRF)                     |
+| `chunkStrategy`    | `"lines"` \| `"smart"` | `"smart"`         | `lines` : fenêtre fixe ; `smart` : respect des frontières sémantiques (fonctions, classes) |
+| `maxPerFile`       | `number`               | `2`               | Nombre maximum de chunks retournés par fichier — évite qu'un seul fichier domine            |
+| `maxChunksPerFile` | `number`               | `80`              | Limite le nombre de chunks indexés par fichier (utile pour les très grands fichiers)        |
+| `maxFileSizeKb`    | `number`               | `512`             | Ignore les fichiers dépassant cette taille (en Ko)                                          |
+| `include`          | `string[]`             | `["**/*"]`        | Patterns glob des fichiers à indexer                                                        |
+| `exclude`          | `string[]`             | `[]`              | Patterns glob des fichiers à exclure (en plus des exclusions automatiques)                  |
 
-> jgrep indexe **tous les fichiers** du projet. Le `.gitignore` est automatiquement respecté, et les répertoires internes `.jgrep/` et `.git/` sont toujours exclus en dur.
-
-> `STRUCTURE.md` et `DOCUMENTATION.md` : ajoutez-les à votre `.gitignore` si vous ne souhaitez pas qu'ils apparaissent dans les résultats.
+> **Exclusions automatiques** : `.jgrep/`, `.git/`, fichiers binaires, lock files (`*.lock`, `package-lock.json`, `composer.lock`, `yarn.lock`, `bun.lockb`), assets minifiés (`*.min.js`, `*.min.css`), source maps (`*.map`), `config/reference.php` (fichier Symfony auto-généré). Le `.gitignore` du projet est également respecté.
 
 ---
 
@@ -140,7 +165,7 @@ Depuis la racine du projet à indexer (après `jgrep install`) :
 jgrep index
 ```
 
-Les fichiers inchangés sont réutilisés depuis la base LanceDB (`.jgrep/`) — seuls les fichiers nouveaux ou modifiés sont ré-embeddés. Un index BM25 full-text est automatiquement mis à jour après chaque indexation.
+Les fichiers inchangés sont réutilisés depuis la base LanceDB (`.jgrep/`) via leur hash SHA-1 — seuls les fichiers nouveaux ou modifiés sont ré-embeddés. Un index BM25 full-text est automatiquement mis à jour après chaque indexation.
 
 Pour re-indexer automatiquement à chaque modification de fichier :
 
@@ -169,7 +194,7 @@ jgrep "gestion des erreurs dans le contrôleur"
 | `--json`            | Sortie au format JSON (pour scripts / piping / agents)                       |
 | `--compact`         | JSON sans le texte des chunks — uniquement fichier, lignes et score          |
 | `--topK <N>`        | Nombre de résultats à retourner (écrase `topK` du `.jgreprc`)                |
-| `--lang <list>`     | Filtre par langage(s), séparés par virgule (ex. `ts,php,py`)                 |
+| `--lang <list>`     | Filtre par langage(s), séparés par virgule — voir tableau ci-dessous         |
 | `--min-score <n>`   | Score minimum (0–1), écrase `minScore` du `.jgreprc`                         |
 
 ```bash
@@ -178,6 +203,37 @@ jgrep "gestion des exceptions" --json
 jgrep "routes API" --lang ts,php --topK 3
 jgrep "kernel symfony" --json --compact          # pour les agents IA
 jgrep "authentification" --min-score 0.6         # résultats très pertinents seulement
+```
+
+**Langages supportés par `--lang` :**
+
+Les noms complets et les alias courts sont acceptés :
+
+| Alias   | Nom complet    | Extensions indexées             |
+|---------|----------------|---------------------------------|
+| `php`   | `php`          | `.php`                          |
+| `ts`    | `typescript`   | `.ts`, `.tsx`                   |
+| `js`    | `javascript`   | `.js`, `.jsx`                   |
+| `py`    | `python`       | `.py`                           |
+| `rb`    | `ruby`         | `.rb`                           |
+| `rs`    | `rust`         | `.rs`                           |
+| `go`    | `go`           | `.go`                           |
+| `java`  | `java`         | `.java`                         |
+| `cs`    | `csharp`       | `.cs`                           |
+| `sh`    | `shell`        | `.sh`                           |
+| `md`    | `markdown`     | `.md`                           |
+| `twig`  | `twig`         | `.twig`                         |
+| `html`  | `html`         | `.html`                         |
+| `css`   | `css`          | `.css`                          |
+| `yaml`  | `yaml`         | `.yaml`, `.yml`                 |
+| `json`  | `json`         | `.json`                         |
+| `sql`   | `sql`          | `.sql`                          |
+| `vue`   | `vue`          | `.vue`                          |
+
+```bash
+jgrep "composant navbar" --lang twig
+jgrep "hook useEffect" --lang ts
+jgrep "migration schema" --lang php,yaml
 ```
 
 ---
@@ -230,19 +286,20 @@ Un monorepo mêle TypeScript, PHP et des noms de composants qui ne sont pas touj
 
 ## Fonctionnement
 
-1. **Initialisation** — `jgrep install` crée `.jgreprc`, initialise la base LanceDB dans `.jgrep/` et met à jour `.gitignore`.
-2. **Découverte** — `jgrep index` parcourt tous les fichiers du projet en respectant `.gitignore`. Les répertoires `.jgrep/` et `.git/` sont exclus en dur.
+1. **Initialisation** — `jgrep install` détecte le type de projet, crée `.jgreprc` avec des exclusions adaptées, initialise la base LanceDB dans `.jgrep/` et met à jour `.gitignore`.
+2. **Découverte** — `jgrep index` parcourt les fichiers selon les patterns `include`/`exclude` du `.jgreprc`, en respectant le `.gitignore`. Les répertoires `.jgrep/` et `.git/`, les fichiers binaires, les lock files et les assets minifiés sont exclus en dur.
 3. **Chunking** — chaque fichier est découpé selon la stratégie choisie :
    - `lines` : fenêtre glissante de `chunkSize` lignes avec `overlap` de recouvrement.
-   - `smart` : même mécanique mais le split préfère les frontières sémantiques (fonctions, classes, méthodes, balises HTML) détectées par regex. Un fichier qui tient en un seul chunk n'est pas fragmenté davantage.
+   - `smart` : même mécanique mais le split préfère les frontières sémantiques (fonctions, classes, méthodes, balises HTML, blocs Twig) détectées par regex. Un fichier qui tient en un seul chunk n'est pas fragmenté davantage.
 4. **Embedding** — les chunks nouveaux ou modifiés sont envoyés à l'API Voyage AI (`voyage-code-3`) en lots. Les fichiers inchangés (même hash SHA-1) sont réutilisés depuis la base.
 5. **Index** — vecteurs et métadonnées sont persistés dans LanceDB ; un index BM25 full-text est recréé sur la colonne `text` après chaque upsert.
 6. **Recherche** — la requête est embeddée à la volée, puis :
-   - **Dense** (toujours) : similarité cosinus contre les vecteurs stockés, `topK × 3` candidats.
+   - **Dense** (toujours) : similarité cosinus contre les vecteurs stockés, `topK × 5` candidats.
+   - **Filtre qualité cosinus** : les candidats dont la similarité cosinus est trop faible sont éliminés avant le re-ranking, rendant `minScore` efficace même avec le reranker.
    - **BM25** (si `hybridSearch: true`) : recherche plein texte sur l'index FTS, même nombre de candidats.
    - **Fusion RRF** (si hybride) : les deux listes sont fusionnées par Reciprocal Rank Fusion, scores normalisés sur [0, 1].
    - **Re-ranking** (si `rerank: true` et clé API disponible) : les `rerankCandidates` meilleurs candidats sont envoyés à Voyage Rerank ; les scores `relevanceScore` remplacent les scores RRF/cosinus.
-7. **Résultats** — filtre `minScore`, déduplication à `maxPerFile` chunks par fichier, retour des `topK` meilleurs.
+7. **Résultats** — filtre `minScore`, déduplication à `maxPerFile` chunks par fichier (les chunks qui se chevauchent avec un chunk déjà inclus sont ignorés), retour des `topK` meilleurs.
 
 ---
 
@@ -316,22 +373,23 @@ jgrep "votre requête" --json --compact --topK 5
 
 ```
 src/
-├── cli.ts                  # Point d'entrée CLI — commandes install, index, search + guard checkInstalled
+├── cli.ts                  # Point d'entrée CLI — commandes install, index, search, update + guard checkInstalled
 ├── types.ts                # Interfaces TypeScript (FgrepConfig, Chunk, SearchResult, …)
 ├── commands/
-│   ├── install.ts          # Commande install — init .jgreprc, .jgrep/, LanceDB, .gitignore
+│   ├── install.ts          # Commande install — détection projet, init .jgreprc, .jgrep/, LanceDB, .gitignore
 │   ├── index.ts            # Commande index — build incrémental, mode watch, progress TTY-aware
-│   └── search.ts           # Commande search — embed query, recherche, formatage
+│   ├── search.ts           # Commande search — validation, alias lang, embed query, recherche, formatage
+│   └── update.ts           # Commande update — vérification GitHub releases, mise à jour via npm
 ├── core/
 │   ├── config.ts           # Chargement .jgreprc — merge avec les défauts
 │   ├── chunker.ts          # Découpage fichiers — chunkFile (lignes fixes) + chunkFileSmart (frontières)
 │   ├── embeddings.ts       # Client Voyage AI — embeddings document et query (env > config key)
 │   ├── indexer.ts          # Orchestration incrémentale — hash SHA-1, embed, upsert, FTS index
 │   ├── reranker.ts         # Re-ranking Voyage Rerank — rerankResults avec relevanceScore
-│   ├── search.ts           # searchIndex — dense, hybrid RRF, reranking, minScore, maxPerFile
+│   ├── search.ts           # searchIndex — dense+cosine gate, hybrid RRF, reranking, overlap dedup
 │   ├── store.ts            # LanceDB — table, upsert, delete, FTS index, fullTextSearch
-│   ├── walker.ts           # Parcours fichiers — globby, gitignore, exclusion dure .jgrep/.git
-│   └── lang.ts             # Détection langage par extension
+│   ├── walker.ts           # Parcours fichiers — globby, gitignore, include/exclude config, exclusions dures
+│   └── lang.ts             # Détection langage par extension (30+ extensions, alias courts supportés)
 └── output/
     └── formatter.ts        # Formatage pretty / JSON / --compact
 ```

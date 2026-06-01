@@ -6,19 +6,24 @@ import { Command } from 'commander'
 import { indexCommand } from './commands/index.js'
 import { searchCommand } from './commands/search.js'
 import { installCommand } from './commands/install.js'
+import { updateCommand } from './commands/update.js'
+
+declare const __PKG_VERSION__: string
 
 async function checkInstalled(cwd: string): Promise<void> {
 	try {
 		await access(path.join(cwd, '.jgreprc'))
 	} catch {
-		process.stderr.write(pc.red('Error: jgrep is not initialized. Run `jgrep install` first.') + '\n')
+		process.stderr.write(
+			pc.red('Error: jgrep is not initialized. Run `jgrep install` first.') + '\n',
+		)
 		process.exit(1)
 	}
 }
 
 const program = new Command()
 
-program.name('jgrep').version('0.1.0')
+program.name('jgrep').version(__PKG_VERSION__)
 
 program
 	.command('index')
@@ -35,13 +40,26 @@ program
 	.option('--json', 'Output results as JSON')
 	.option('--topK <n>', 'Number of results to return', (v) => parseInt(v, 10))
 	.option('--lang <langs>', 'Filter by language(s), comma-separated (e.g. ts,php,py)')
-	.option('--min-score <n>', 'Minimum relevance score (0-1), overrides .jgreprc', (v) => parseFloat(v))
+	.option('--min-score <n>', 'Minimum relevance score (0-1), overrides .jgreprc', (v) =>
+		parseFloat(v),
+	)
 	.option('--compact', 'Omit chunk text from output (file, lines and score only — for agents)')
-	.action(async (queryParts: string[], opts: { json?: boolean; topK?: number; lang?: string; minScore?: number; compact?: boolean }) => {
-		await checkInstalled(process.cwd())
-		const query = queryParts.join(' ')
-		await searchCommand(query, { json: opts.json, topK: opts.topK, lang: opts.lang, minScore: opts.minScore, noText: opts.compact })
-	})
+	.action(
+		async (
+			queryParts: string[],
+			opts: { json?: boolean; topK?: number; lang?: string; minScore?: number; compact?: boolean },
+		) => {
+			await checkInstalled(process.cwd())
+			const query = queryParts.join(' ')
+			await searchCommand(query, {
+				json: opts.json,
+				topK: opts.topK,
+				lang: opts.lang,
+				minScore: opts.minScore,
+				noText: opts.compact,
+			})
+		},
+	)
 
 program
 	.command('install')
@@ -50,6 +68,14 @@ program
 	.option('--force', 'Overwrite existing .jgreprc')
 	.action(async (opts: { apiKey?: string; force?: boolean }) => {
 		await installCommand({ apiKey: opts.apiKey, force: opts.force })
+	})
+
+program
+	.command('update')
+	.description('Update jgrep to the latest release')
+	.option('--check', 'Only check if an update is available, do not install')
+	.action(async (opts: { check?: boolean }) => {
+		await updateCommand({ check: opts.check })
 	})
 
 program.parseAsync(process.argv).catch((err: unknown) => {
