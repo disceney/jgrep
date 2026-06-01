@@ -7,12 +7,14 @@ export const DEFAULT_CONFIG: FgrepConfig = {
 	topK: 10,
 	chunkSize: 40,
 	overlap: 10,
-	minScore: 0.3,
+	minScore: 0.5,
 	rerank: true,
 	rerankCandidates: 30,
 	hybridSearch: true,
 	chunkStrategy: 'smart',
 	maxPerFile: 2,
+	maxChunksPerFile: 80,
+	maxFileSizeKb: 512,
 	voyageApiKey: '',
 }
 

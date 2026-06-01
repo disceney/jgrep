@@ -30,14 +30,14 @@ export async function buildIndexIncremental(
 	onProgress?: ProgressCallback,
 ): Promise<IndexData> {
 	const table = await openTable(cwd)
-	const existingHashes = await getFileHashes(table)
-	const files = await walkFiles(cwd)
+	const [existingHashes, files] = await Promise.all([
+		getFileHashes(table),
+		walkFiles(cwd),
+	])
 	const currentFileSet = new Set(files)
 
-	const reusedFiles = new Set<string>()
 	const chunkFn = config.chunkStrategy === 'smart' ? chunkFileSmart : chunkFile
-	const filesToEmbed: Array<{ file: string; hash: string; chunks: ReturnType<typeof chunkFn> }> =
-		[]
+	const filesToEmbed: Array<{ file: string; hash: string; chunks: ReturnType<typeof chunkFn> }> = []
 
 	for (const file of files) {
 		const absolutePath = join(cwd, file)
@@ -48,16 +48,30 @@ export async function buildIndexIncremental(
 			continue
 		}
 
-		const hash = sha1(content)
-		const existingHash = existingHashes.get(file)
+		// Skip files that appear binary (null bytes)
+		if (content.includes('\0')) {
+			onProgress?.(file, 'empty')
+			continue
+		}
 
-		if (existingHash !== undefined && existingHash === hash) {
-			reusedFiles.add(file)
+		// Skip files exceeding the size limit
+		const maxKb = config.maxFileSizeKb ?? 512
+		if (Buffer.byteLength(content, 'utf-8') > maxKb * 1024) {
+			onProgress?.(file, 'empty')
+			continue
+		}
+
+		const hash = sha1(content)
+		if (existingHashes.get(file) === hash) {
 			onProgress?.(file, 'reused')
 			continue
 		}
 
-		const chunks = chunkFn(file, content, config.chunkSize, config.overlap)
+		let chunks = chunkFn(file, content, config.chunkSize, config.overlap)
+		const maxChunks = config.maxChunksPerFile ?? 80
+		if (chunks.length > maxChunks) {
+			chunks = chunks.slice(0, maxChunks)
+		}
 		if (chunks.length === 0) {
 			onProgress?.(file, 'empty')
 		} else {
@@ -66,16 +80,23 @@ export async function buildIndexIncremental(
 		}
 	}
 
+	// Remove deleted files
+	const deletionPromises: Promise<void>[] = []
 	for (const existingFile of existingHashes.keys()) {
 		if (!currentFileSet.has(existingFile)) {
-			await deleteChunksForFile(table, existingFile)
+			deletionPromises.push(deleteChunksForFile(table, existingFile))
 		}
 	}
-
+	// Remove stale chunks for files that will be re-embedded
 	for (const entry of filesToEmbed) {
 		if (existingHashes.has(entry.file)) {
-			await deleteChunksForFile(table, entry.file)
+			deletionPromises.push(deleteChunksForFile(table, entry.file))
 		}
+	}
+	await Promise.all(deletionPromises)
+
+	if (filesToEmbed.length === 0) {
+		return { model: config.model, ...await getStats(table) }
 	}
 
 	const allTexts: string[] = []
@@ -85,24 +106,25 @@ export async function buildIndexIncremental(
 		}
 	}
 
-	if (allTexts.length > 0) {
-		const allEmbeddings = await embedTexts(allTexts, config.model, config.voyageApiKey)
-		let embeddingOffset = 0
-		const indexedChunks: Array<IndexedChunk & { fileHash: string }> = []
+	const allEmbeddings = await embedTexts(allTexts, config.model, config.voyageApiKey)
 
-		for (const entry of filesToEmbed) {
-			const lang = detectLang(entry.file)
-			for (const chunk of entry.chunks) {
-				const embedding = allEmbeddings[embeddingOffset] ?? []
-				embeddingOffset++
-				indexedChunks.push({ ...chunk, lang, embedding, fileHash: entry.hash })
-			}
+	let embeddingOffset = 0
+	const indexedChunks: Array<IndexedChunk & { fileHash: string }> = []
+	for (const entry of filesToEmbed) {
+		const lang = detectLang(entry.file)
+		for (const chunk of entry.chunks) {
+			indexedChunks.push({
+				...chunk,
+				lang,
+				embedding: allEmbeddings[embeddingOffset] ?? [],
+				fileHash: entry.hash,
+			})
+			embeddingOffset++
 		}
-
-		await upsertChunks(table, indexedChunks)
-		await createFTSIndex(table)
 	}
 
-	const stats = await getStats(table)
-	return { model: config.model, ...stats }
+	await upsertChunks(table, indexedChunks)
+	await createFTSIndex(table)
+
+	return { model: config.model, ...await getStats(table) }
 }

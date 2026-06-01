@@ -50,7 +50,10 @@ export async function getFileHashes(table: any): Promise<Map<string, string>> {
 		const rows = await table.query().select(['file', 'fileHash']).limit(1_000_000).toArray()
 		const map = new Map<string, string>()
 		for (const row of rows) {
-			map.set(row['file'] as string, row['fileHash'] as string)
+			// Keep only the first hash seen per file (all chunks of a file share the same hash)
+			if (!map.has(row['file'] as string)) {
+				map.set(row['file'] as string, row['fileHash'] as string)
+			}
 		}
 		return map
 	} catch {
@@ -60,10 +63,9 @@ export async function getFileHashes(table: any): Promise<Map<string, string>> {
 
 export async function getStats(table: any): Promise<{ fileCount: number; chunkCount: number }> {
 	try {
-		const chunkCount: number = await table.countRows()
 		const rows = await table.query().select(['file']).limit(1_000_000).toArray()
 		const fileCount = new Set(rows.map((r: any) => r['file'] as string)).size
-		return { fileCount, chunkCount }
+		return { fileCount, chunkCount: rows.length }
 	} catch {
 		return { fileCount: 0, chunkCount: 0 }
 	}

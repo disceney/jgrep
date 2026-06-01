@@ -39,7 +39,8 @@ export async function searchIndex(
 	config: FgrepConfig,
 ): Promise<SearchResult[]> {
 	const topK = opts.topK ?? config.topK ?? 10
-	const candidateCount = topK * 3
+	// Fetch a larger candidate pool so reranking and RRF have richer material
+	const candidateCount = Math.max(topK * 5, 50)
 
 	let results: SearchResult[]
 

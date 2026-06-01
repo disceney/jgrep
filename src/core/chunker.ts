@@ -33,12 +33,23 @@ export function chunkFile(
 }
 
 const BOUNDARY_PATTERNS: RegExp[] = [
-	/^\s*(?:function\s+\w|(?:public|private|protected)\s+(?:static\s+)?function\s+\w)/,
-	/^\s*(?:abstract\s+)?(?:final\s+)?class\s+\w/,
+	// PHP methods and functions
+	/^\s*(?:(?:public|private|protected)\s+(?:static\s+)?(?:readonly\s+)?)?function\s+\w/,
+	// PHP / TS / JS classes and abstract classes
+	/^\s*(?:abstract\s+)?(?:final\s+)?(?:readonly\s+)?class\s+\w/,
+	// PHP attributes (e.g. #[Route(...)])
+	/^\s*#\[/,
+	// PHP interface, trait, enum
+	/^\s*(?:interface|trait|enum)\s+\w/,
+	// JS/TS export functions
 	/^\s*(?:export\s+)?(?:default\s+)?(?:async\s+)?function\s+\w/,
+	// JS/TS arrow functions and consts
 	/^\s*(?:export\s+)?(?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?\(/,
-	/^\s*(?:export\s+)?(?:abstract\s+)?class\s+\w/,
-	/^\s*<(?:div|section|template|script|style)[\s>\/]/i,
+	// Twig blocks: {% block %}, {% macro %}, {% for %}, {% if %} at top-level indent
+	/^\{%[-\s]*(?:block|macro|for|if)\b/,
+	// HTML structural tags
+	/^\s*<(?:div|section|article|main|header|footer|template|script|style|form)[\s>\/]/i,
+	// PHP open/close tags
 	/^\s*<\?php\b/,
 	/^\s*\?>/,
 ]

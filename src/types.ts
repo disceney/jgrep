@@ -10,6 +10,8 @@ export interface FgrepConfig {
 	hybridSearch?: boolean
 	chunkStrategy?: 'lines' | 'smart'
 	maxPerFile?: number
+	maxChunksPerFile?: number
+	maxFileSizeKb?: number
 }
 
 export interface Chunk {

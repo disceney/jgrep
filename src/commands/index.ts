@@ -3,25 +3,24 @@ import { join } from 'node:path'
 import pc from 'picocolors'
 import { loadConfig } from '../core/config.js'
 import { buildIndexIncremental, type ProgressCallback } from '../core/indexer.js'
-import { walkFiles } from '../core/walker.js'
 import type { IndexData } from '../types.js'
 
 const FGREP_DIR = '.jgrep'
 const DEBOUNCE_MS = 300
 
-function makeProgress(total: number): ProgressCallback {
+function makeProgress(label?: string): ProgressCallback {
 	const isTTY = process.stdout.isTTY
 	let seen = 0
+	const tag = label ? `${pc.dim(`[${label}]`)} ` : ''
 	return (file, status, chunks) => {
 		seen++
-		const counter = pc.dim(`[${String(seen).padStart(String(total).length)}/${total}]`)
 		if (status === 'embedding') {
 			if (isTTY) process.stdout.write(`\r\x1b[K`)
 			console.log(
-				`  ${counter} ${pc.green('+')} ${pc.cyan(file)} ${pc.dim(`${chunks} chunk${chunks === 1 ? '' : 's'}`)}`,
+				`  ${tag}${pc.green('+')} ${pc.cyan(file)} ${pc.dim(`${chunks} chunk${chunks === 1 ? '' : 's'}`)}`,
 			)
 		} else if (isTTY) {
-			process.stdout.write(`\r\x1b[K  ${counter} ${pc.dim(file)}`)
+			process.stdout.write(`\r\x1b[K  ${tag}${pc.dim(file)}`)
 		}
 	}
 }
@@ -32,9 +31,7 @@ async function runBuild(cwd: string, label?: string): Promise<IndexData> {
 
 	console.log(`\n${tag}${pc.bold('Indexing')} ${pc.dim(cwd)}`)
 
-	const files = await walkFiles(cwd)
-
-	const index = await buildIndexIncremental(cwd, config, null, makeProgress(files.length))
+	const index = await buildIndexIncremental(cwd, config, null, makeProgress(label))
 
 	if (process.stdout.isTTY) process.stdout.write(`\r\x1b[K`)
 
