@@ -1,0 +1,10 @@
+###> arlette/claude-code ###
+/.claude/
+/CLAUDE.md
+###< arlette/claude-code ###
+
+/node_modules/
+/dist/
+/.idea/
+/.DS_Store
+/.env

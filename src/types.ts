@@ -1,0 +1,44 @@
+export interface FgrepConfig {
+	include: string[]
+	exclude: string[]
+	model: string
+	topK: number
+	chunkSize: number
+	overlap: number
+	minScore: number
+}
+
+export interface Chunk {
+	file: string
+	startLine: number
+	endLine: number
+	text: string
+	lang: string
+}
+
+export interface IndexedChunk extends Chunk {
+	embedding: number[]
+}
+
+export interface IndexData {
+	model: string
+	fileCount: number
+	chunkCount: number
+}
+
+export interface SearchResult {
+	file: string
+	startLine: number
+	endLine: number
+	score: number
+	text: string
+	lang: string
+}
+
+export interface SearchOptions {
+	topK?: number
+	minScore?: number
+	langs?: string[]
+}
+
+export type OutputFormat = 'pretty' | 'json'
