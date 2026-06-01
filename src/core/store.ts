@@ -1,4 +1,4 @@
-import { connect } from '@lancedb/lancedb'
+import { connect, Index } from '@lancedb/lancedb'
 import { Field, FixedSizeList, Float32, Int32, Schema, Utf8 } from 'apache-arrow'
 import { join } from 'node:path'
 import type { IndexedChunk } from '../types.js'
@@ -66,5 +66,26 @@ export async function getStats(table: any): Promise<{ fileCount: number; chunkCo
 		return { fileCount, chunkCount }
 	} catch {
 		return { fileCount: 0, chunkCount: 0 }
+	}
+}
+
+export async function createFTSIndex(table: any): Promise<void> {
+	try {
+		await table.createIndex('text', { config: Index.fts() })
+	} catch {
+		// silently ignore: index already exists or FTS unsupported
+	}
+}
+
+export async function fullTextSearch(table: any, query: string, limit: number): Promise<any[]> {
+	try {
+		const rows = await table
+			.search(query, 'fts', 'text')
+			.select(['file', 'startLine', 'endLine', 'text', 'lang', 'fileHash'])
+			.limit(limit)
+			.toArray()
+		return rows
+	} catch {
+		return []
 	}
 }

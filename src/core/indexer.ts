@@ -2,10 +2,10 @@ import { createHash } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import type { FgrepConfig, IndexData, IndexedChunk } from '../types.js'
-import { chunkFile } from './chunker.js'
+import { chunkFile, chunkFileSmart } from './chunker.js'
 import { embedTexts } from './embeddings.js'
 import { detectLang } from './lang.js'
-import { deleteChunksForFile, getFileHashes, getStats, openTable, upsertChunks } from './store.js'
+import { createFTSIndex, deleteChunksForFile, getFileHashes, getStats, openTable, upsertChunks } from './store.js'
 import { walkFiles } from './walker.js'
 
 export type FileStatus = 'reused' | 'embedding' | 'empty'
@@ -35,7 +35,8 @@ export async function buildIndexIncremental(
 	const currentFileSet = new Set(files)
 
 	const reusedFiles = new Set<string>()
-	const filesToEmbed: Array<{ file: string; hash: string; chunks: ReturnType<typeof chunkFile> }> =
+	const chunkFn = config.chunkStrategy === 'smart' ? chunkFileSmart : chunkFile
+	const filesToEmbed: Array<{ file: string; hash: string; chunks: ReturnType<typeof chunkFn> }> =
 		[]
 
 	for (const file of files) {
@@ -56,7 +57,7 @@ export async function buildIndexIncremental(
 			continue
 		}
 
-		const chunks = chunkFile(file, content, config.chunkSize, config.overlap)
+		const chunks = chunkFn(file, content, config.chunkSize, config.overlap)
 		if (chunks.length === 0) {
 			onProgress?.(file, 'empty')
 		} else {
@@ -85,7 +86,7 @@ export async function buildIndexIncremental(
 	}
 
 	if (allTexts.length > 0) {
-		const allEmbeddings = await embedTexts(allTexts, config.model)
+		const allEmbeddings = await embedTexts(allTexts, config.model, config.voyageApiKey)
 		let embeddingOffset = 0
 		const indexedChunks: Array<IndexedChunk & { fileHash: string }> = []
 
@@ -99,6 +100,7 @@ export async function buildIndexIncremental(
 		}
 
 		await upsertChunks(table, indexedChunks)
+		await createFTSIndex(table)
 	}
 
 	const stats = await getStats(table)

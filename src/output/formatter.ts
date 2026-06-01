@@ -1,13 +1,26 @@
 import pc from 'picocolors'
 import type { OutputFormat, SearchResult } from '../types.js'
 
-export function formatResults(results: SearchResult[], format: OutputFormat): string {
+export function formatResults(
+	results: SearchResult[],
+	format: OutputFormat,
+	noText = false,
+): string {
 	if (results.length === 0) {
-		return 'No matches.'
+		return format === 'json' ? '[]' : 'No matches.'
 	}
 
 	if (format === 'json') {
-		return JSON.stringify(results, null, 2)
+		const out = noText
+			? results.map(({ file, lang, startLine, endLine, score }) => ({
+					file,
+					lang,
+					startLine,
+					endLine,
+					score,
+				}))
+			: results
+		return JSON.stringify(out, null, 2)
 	}
 
 	return results
@@ -16,6 +29,7 @@ export function formatResults(results: SearchResult[], format: OutputFormat): st
 				pc.bold(pc.cyan(`${result.file}:${result.startLine}-${result.endLine}`)) +
 				' ' +
 				pc.yellow(`(${result.score.toFixed(4)})`)
+			if (noText) return header
 			const body = result.text
 				.split('\n')
 				.map((line) => `  ${line}`)

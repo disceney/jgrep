@@ -2,13 +2,13 @@ import { VoyageAIClient } from 'voyageai'
 
 const BATCH_SIZE = 128
 
-export async function embedTexts(texts: string[], model: string): Promise<number[][]> {
-	const apiKey = process.env['VOYAGE_API_KEY']
-	if (!apiKey) {
+export async function embedTexts(texts: string[], model: string, apiKey?: string): Promise<number[][]> {
+	const resolvedApiKey = process.env['VOYAGE_API_KEY'] || apiKey
+	if (!resolvedApiKey) {
 		throw new Error('VOYAGE_API_KEY environment variable is not set')
 	}
 
-	const client = new VoyageAIClient({ apiKey })
+	const client = new VoyageAIClient({ apiKey: resolvedApiKey })
 	const results: number[][] = new Array(texts.length)
 
 	for (let i = 0; i < texts.length; i += BATCH_SIZE) {
@@ -23,10 +23,10 @@ export async function embedTexts(texts: string[], model: string): Promise<number
 	return results
 }
 
-export async function embedQuery(text: string, model: string): Promise<number[]> {
-	const apiKey = process.env['VOYAGE_API_KEY']
-	if (!apiKey) throw new Error('VOYAGE_API_KEY environment variable is not set')
-	const client = new VoyageAIClient({ apiKey })
+export async function embedQuery(text: string, model: string, apiKey?: string): Promise<number[]> {
+	const resolvedApiKey = process.env['VOYAGE_API_KEY'] || apiKey
+	if (!resolvedApiKey) throw new Error('VOYAGE_API_KEY environment variable is not set')
+	const client = new VoyageAIClient({ apiKey: resolvedApiKey })
 	const response = await client.embed({ input: [text], model, inputType: 'query' })
 	return response.data?.[0]?.embedding ?? []
 }

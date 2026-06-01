@@ -10,16 +10,17 @@ const FGREP_DIR = '.jgrep'
 const DEBOUNCE_MS = 300
 
 function makeProgress(total: number): ProgressCallback {
+	const isTTY = process.stdout.isTTY
 	let seen = 0
 	return (file, status, chunks) => {
 		seen++
 		const counter = pc.dim(`[${String(seen).padStart(String(total).length)}/${total}]`)
 		if (status === 'embedding') {
-			process.stdout.write(`\r\x1b[K`)
+			if (isTTY) process.stdout.write(`\r\x1b[K`)
 			console.log(
 				`  ${counter} ${pc.green('+')} ${pc.cyan(file)} ${pc.dim(`${chunks} chunk${chunks === 1 ? '' : 's'}`)}`,
 			)
-		} else {
+		} else if (isTTY) {
 			process.stdout.write(`\r\x1b[K  ${counter} ${pc.dim(file)}`)
 		}
 	}
@@ -35,7 +36,7 @@ async function runBuild(cwd: string, label?: string): Promise<IndexData> {
 
 	const index = await buildIndexIncremental(cwd, config, null, makeProgress(files.length))
 
-	process.stdout.write(`\r\x1b[K`)
+	if (process.stdout.isTTY) process.stdout.write(`\r\x1b[K`)
 
 	console.log(
 		`  ${pc.green('✓')} ${pc.bold(String(index.fileCount))} file(s) · ${pc.bold(String(index.chunkCount))} chunk(s)`,

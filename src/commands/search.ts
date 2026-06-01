@@ -7,7 +7,7 @@ import type { SearchOptions } from '../types.js'
 
 export async function searchCommand(
 	query: string,
-	opts: { json?: boolean; topK?: number; lang?: string },
+	opts: { json?: boolean; topK?: number; lang?: string; minScore?: number; noText?: boolean },
 ): Promise<void> {
 	const cwd = process.cwd()
 	const config = await loadConfig(cwd)
@@ -26,13 +26,13 @@ export async function searchCommand(
 		: []
 	const searchOpts: SearchOptions = {
 		topK: opts.topK ?? config.topK,
-		minScore: config.minScore,
+		minScore: opts.minScore ?? config.minScore,
 		langs,
 	}
 
-	const embedding = await embedQuery(query, config.model)
-	const results = await searchIndex(embedding, table, searchOpts)
+	const embedding = await embedQuery(query, config.model, config.voyageApiKey)
+	const results = await searchIndex(embedding, query, table, searchOpts, config)
 	const format = opts.json ? 'json' : 'pretty'
 
-	console.log(formatResults(results, format))
+	console.log(formatResults(results, format, opts.noText))
 }

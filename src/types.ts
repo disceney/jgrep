@@ -6,6 +6,12 @@ export interface FgrepConfig {
 	chunkSize: number
 	overlap: number
 	minScore: number
+	voyageApiKey?: string
+	rerank?: boolean
+	rerankCandidates?: number
+	hybridSearch?: boolean
+	chunkStrategy?: 'lines' | 'smart'
+	maxPerFile?: number
 }
 
 export interface Chunk {
