@@ -1,4 +1,5 @@
 import { globby } from 'globby'
+import type { FgrepConfig } from '../types.js'
 
 const BINARY_EXTENSIONS = new Set([
 	'png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico', 'bmp', 'tiff', 'avif',
@@ -27,18 +28,28 @@ const ALWAYS_IGNORED = [
 	'**/package-lock.json',
 	'**/yarn.lock',
 	'**/bun.lockb',
+	'**/composer.lock',
 	// Minified assets
 	'**/*.min.js',
 	'**/*.min.css',
 	// Source maps
 	'**/*.map',
+	// Symfony auto-generated reference config (thousands of lines, pure noise for search)
+	'config/reference.php',
+	// Compiled/generated build artefacts
+	'**/bootstrap.cache.php',
+	'**/.phpunit.cache/**',
+	'**/coverage/**',
 ]
 
-export async function walkFiles(cwd: string): Promise<string[]> {
-	const files = await globby('**/*', {
+export async function walkFiles(cwd: string, config?: Pick<FgrepConfig, 'include' | 'exclude'>): Promise<string[]> {
+	const patterns = config?.include ?? ['**/*']
+	const ignore = [...ALWAYS_IGNORED, ...(config?.exclude ?? [])]
+
+	const files = await globby(patterns, {
 		cwd,
 		gitignore: true,
-		ignore: ALWAYS_IGNORED,
+		ignore,
 		dot: false,
 		absolute: false,
 		onlyFiles: true,

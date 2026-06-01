@@ -12,6 +12,8 @@ export interface FgrepConfig {
 	maxPerFile?: number
 	maxChunksPerFile?: number
 	maxFileSizeKb?: number
+	include?: string[]
+	exclude?: string[]
 }
 
 export interface Chunk {

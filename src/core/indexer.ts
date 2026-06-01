@@ -32,7 +32,7 @@ export async function buildIndexIncremental(
 	const table = await openTable(cwd)
 	const [existingHashes, files] = await Promise.all([
 		getFileHashes(table),
-		walkFiles(cwd),
+		walkFiles(cwd, { include: config.include, exclude: config.exclude }),
 	])
 	const currentFileSet = new Set(files)
 
