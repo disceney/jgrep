@@ -52,10 +52,14 @@ const PROJECT_EXCLUDES: Array<{
 	},
 ]
 
-async function detectProjectExcludes(cwd: string): Promise<{ excludes: string[]; label: string | null }> {
+async function detectProjectExcludes(
+	cwd: string,
+): Promise<{ excludes: string[]; label: string | null }> {
 	for (const sig of PROJECT_EXCLUDES) {
 		const filePath = join(cwd, sig.detectFile)
-		const exists = await access(filePath).then(() => true).catch(() => false)
+		const exists = await access(filePath)
+			.then(() => true)
+			.catch(() => false)
 		if (!exists) continue
 		if (sig.detectContent) {
 			const content = await readFile(filePath, { encoding: 'utf-8' }).catch(() => '')
@@ -73,7 +77,9 @@ export async function installCommand(opts: { apiKey?: string; force?: boolean })
 	const gitignorePath = join(cwd, '.gitignore')
 
 	// (1) Check if .jgreprc already exists
-	const rcExists = await access(rcPath).then(() => true).catch(() => false)
+	const rcExists = await access(rcPath)
+		.then(() => true)
+		.catch(() => false)
 	if (rcExists && !opts.force) {
 		console.log(pc.yellow('⚠ .jgreprc already exists. Use --force to overwrite.'))
 		return
@@ -98,13 +104,19 @@ export async function installCommand(opts: { apiKey?: string; force?: boolean })
 	console.log(`  ${pc.green('✓')} ${pc.bold('LanceDB')} ${pc.dim('table initialized')}`)
 
 	// (5) Append jgrep block to .gitignore if not already present
-	const gitignoreExists = await access(gitignorePath).then(() => true).catch(() => false)
+	const gitignoreExists = await access(gitignorePath)
+		.then(() => true)
+		.catch(() => false)
 	if (gitignoreExists) {
 		const contents = await readFile(gitignorePath, { encoding: 'utf-8' })
 		if (!contents.includes(JGREP_MARKER)) {
 			const separator = contents.endsWith('\n') ? '' : '\n'
-			await writeFile(gitignorePath, contents + separator + JGREP_BLOCK + '\n', { encoding: 'utf-8' })
-			console.log(`  ${pc.green('✓')} ${pc.bold('.gitignore')} ${pc.dim('updated with jgrep block')}`)
+			await writeFile(gitignorePath, contents + separator + JGREP_BLOCK + '\n', {
+				encoding: 'utf-8',
+			})
+			console.log(
+				`  ${pc.green('✓')} ${pc.bold('.gitignore')} ${pc.dim('updated with jgrep block')}`,
+			)
 		} else {
 			console.log(`  ${pc.dim('· .gitignore already contains jgrep block, skipping')}`)
 		}
@@ -114,5 +126,7 @@ export async function installCommand(opts: { apiKey?: string; force?: boolean })
 	}
 
 	// (6) Success summary
-	console.log(`\n${pc.green('✓')} ${pc.bold('jgrep installed successfully')} ${pc.dim('in')} ${pc.cyan(cwd)}`)
+	console.log(
+		`\n${pc.green('✓')} ${pc.bold('jgrep installed successfully')} ${pc.dim('in')} ${pc.cyan(cwd)}`,
+	)
 }

@@ -111,45 +111,40 @@ Après `jgrep install`, un `.jgreprc` est créé à la racine du projet. Exemple
 
 ```json
 {
-  "exclude": [
-    "vendor/**",
-    "var/**",
-    "public/bundles/**",
-    "public/build/**"
-  ],
-  "model": "voyage-code-3",
-  "topK": 10,
-  "chunkSize": 40,
-  "overlap": 10,
-  "minScore": 0.3,
-  "voyageApiKey": "",
-  "rerank": true,
-  "rerankCandidates": 30,
-  "hybridSearch": true,
-  "chunkStrategy": "smart",
-  "maxPerFile": 2
+	"exclude": ["vendor/**", "var/**", "public/bundles/**", "public/build/**"],
+	"model": "voyage-code-3",
+	"topK": 10,
+	"chunkSize": 40,
+	"overlap": 10,
+	"minScore": 0.3,
+	"voyageApiKey": "",
+	"rerank": true,
+	"rerankCandidates": 30,
+	"hybridSearch": true,
+	"chunkStrategy": "smart",
+	"maxPerFile": 2
 }
 ```
 
 ### Référence des options
 
-| Option             | Type                   | Défaut            | Description                                                                                 |
-|--------------------|------------------------|-------------------|---------------------------------------------------------------------------------------------|
-| `model`            | `string`               | `"voyage-code-3"` | Modèle d'embedding Voyage AI                                                                |
-| `topK`             | `number`               | `10`              | Nombre de résultats retournés par défaut                                                    |
-| `chunkSize`        | `number`               | `40`              | Nombre de lignes par chunk                                                                  |
-| `overlap`          | `number`               | `10`              | Lignes de recouvrement entre deux chunks adjacents                                          |
-| `minScore`         | `number`               | `0.3`             | Score minimum (0–1) — filtre les résultats non pertinents                                   |
-| `voyageApiKey`     | `string`               | `""`              | Clé API Voyage AI (fallback si `VOYAGE_API_KEY` non défini dans l'environnement)            |
-| `rerank`           | `boolean`              | `true`            | Active le re-ranking via Voyage Rerank après la recherche vectorielle                       |
+| Option             | Type                   | Défaut            | Description                                                                                |
+| ------------------ | ---------------------- | ----------------- | ------------------------------------------------------------------------------------------ |
+| `model`            | `string`               | `"voyage-code-3"` | Modèle d'embedding Voyage AI                                                               |
+| `topK`             | `number`               | `10`              | Nombre de résultats retournés par défaut                                                   |
+| `chunkSize`        | `number`               | `40`              | Nombre de lignes par chunk                                                                 |
+| `overlap`          | `number`               | `10`              | Lignes de recouvrement entre deux chunks adjacents                                         |
+| `minScore`         | `number`               | `0.3`             | Score minimum (0–1) — filtre les résultats non pertinents                                  |
+| `voyageApiKey`     | `string`               | `""`              | Clé API Voyage AI (fallback si `VOYAGE_API_KEY` non défini dans l'environnement)           |
+| `rerank`           | `boolean`              | `true`            | Active le re-ranking via Voyage Rerank après la recherche vectorielle                      |
 | `rerankCandidates` | `number`               | `30`              | Nombre de candidats récupérés avant re-ranking (doit être ≥ `topK`)                        |
-| `hybridSearch`     | `boolean`              | `true`            | Active la recherche hybride (vecteurs + BM25 full-text avec fusion RRF)                     |
+| `hybridSearch`     | `boolean`              | `true`            | Active la recherche hybride (vecteurs + BM25 full-text avec fusion RRF)                    |
 | `chunkStrategy`    | `"lines"` \| `"smart"` | `"smart"`         | `lines` : fenêtre fixe ; `smart` : respect des frontières sémantiques (fonctions, classes) |
-| `maxPerFile`       | `number`               | `2`               | Nombre maximum de chunks retournés par fichier — évite qu'un seul fichier domine            |
-| `maxChunksPerFile` | `number`               | `80`              | Limite le nombre de chunks indexés par fichier (utile pour les très grands fichiers)        |
-| `maxFileSizeKb`    | `number`               | `512`             | Ignore les fichiers dépassant cette taille (en Ko)                                          |
-| `include`          | `string[]`             | `["**/*"]`        | Patterns glob des fichiers à indexer                                                        |
-| `exclude`          | `string[]`             | `[]`              | Patterns glob des fichiers à exclure (en plus des exclusions automatiques)                  |
+| `maxPerFile`       | `number`               | `2`               | Nombre maximum de chunks retournés par fichier — évite qu'un seul fichier domine           |
+| `maxChunksPerFile` | `number`               | `80`              | Limite le nombre de chunks indexés par fichier (utile pour les très grands fichiers)       |
+| `maxFileSizeKb`    | `number`               | `512`             | Ignore les fichiers dépassant cette taille (en Ko)                                         |
+| `include`          | `string[]`             | `["**/*"]`        | Patterns glob des fichiers à indexer                                                       |
+| `exclude`          | `string[]`             | `[]`              | Patterns glob des fichiers à exclure (en plus des exclusions automatiques)                 |
 
 > **Exclusions automatiques** : `.jgrep/`, `.git/`, fichiers binaires, lock files (`*.lock`, `package-lock.json`, `composer.lock`, `yarn.lock`, `bun.lockb`), assets minifiés (`*.min.js`, `*.min.css`), source maps (`*.map`), `config/reference.php` (fichier Symfony auto-généré). Le `.gitignore` du projet est également respecté.
 
@@ -189,13 +184,13 @@ jgrep "gestion des erreurs dans le contrôleur"
 
 **Options disponibles :**
 
-| Option              | Description                                                                  |
-|---------------------|------------------------------------------------------------------------------|
-| `--json`            | Sortie au format JSON (pour scripts / piping / agents)                       |
-| `--compact`         | JSON sans le texte des chunks — uniquement fichier, lignes et score          |
-| `--topK <N>`        | Nombre de résultats à retourner (écrase `topK` du `.jgreprc`)                |
-| `--lang <list>`     | Filtre par langage(s), séparés par virgule — voir tableau ci-dessous         |
-| `--min-score <n>`   | Score minimum (0–1), écrase `minScore` du `.jgreprc`                         |
+| Option            | Description                                                          |
+| ----------------- | -------------------------------------------------------------------- |
+| `--json`          | Sortie au format JSON (pour scripts / piping / agents)               |
+| `--compact`       | JSON sans le texte des chunks — uniquement fichier, lignes et score  |
+| `--topK <N>`      | Nombre de résultats à retourner (écrase `topK` du `.jgreprc`)        |
+| `--lang <list>`   | Filtre par langage(s), séparés par virgule — voir tableau ci-dessous |
+| `--min-score <n>` | Score minimum (0–1), écrase `minScore` du `.jgreprc`                 |
 
 ```bash
 jgrep "stockage des embeddings" --topK 5
@@ -209,26 +204,26 @@ jgrep "authentification" --min-score 0.6         # résultats très pertinents s
 
 Les noms complets et les alias courts sont acceptés :
 
-| Alias   | Nom complet    | Extensions indexées             |
-|---------|----------------|---------------------------------|
-| `php`   | `php`          | `.php`                          |
-| `ts`    | `typescript`   | `.ts`, `.tsx`                   |
-| `js`    | `javascript`   | `.js`, `.jsx`                   |
-| `py`    | `python`       | `.py`                           |
-| `rb`    | `ruby`         | `.rb`                           |
-| `rs`    | `rust`         | `.rs`                           |
-| `go`    | `go`           | `.go`                           |
-| `java`  | `java`         | `.java`                         |
-| `cs`    | `csharp`       | `.cs`                           |
-| `sh`    | `shell`        | `.sh`                           |
-| `md`    | `markdown`     | `.md`                           |
-| `twig`  | `twig`         | `.twig`                         |
-| `html`  | `html`         | `.html`                         |
-| `css`   | `css`          | `.css`                          |
-| `yaml`  | `yaml`         | `.yaml`, `.yml`                 |
-| `json`  | `json`         | `.json`                         |
-| `sql`   | `sql`          | `.sql`                          |
-| `vue`   | `vue`          | `.vue`                          |
+| Alias  | Nom complet  | Extensions indexées |
+| ------ | ------------ | ------------------- |
+| `php`  | `php`        | `.php`              |
+| `ts`   | `typescript` | `.ts`, `.tsx`       |
+| `js`   | `javascript` | `.js`, `.jsx`       |
+| `py`   | `python`     | `.py`               |
+| `rb`   | `ruby`       | `.rb`               |
+| `rs`   | `rust`       | `.rs`               |
+| `go`   | `go`         | `.go`               |
+| `java` | `java`       | `.java`             |
+| `cs`   | `csharp`     | `.cs`               |
+| `sh`   | `shell`      | `.sh`               |
+| `md`   | `markdown`   | `.md`               |
+| `twig` | `twig`       | `.twig`             |
+| `html` | `html`       | `.html`             |
+| `css`  | `css`        | `.css`              |
+| `yaml` | `yaml`       | `.yaml`, `.yml`     |
+| `json` | `json`       | `.json`             |
+| `sql`  | `sql`        | `.sql`              |
+| `vue`  | `vue`        | `.vue`              |
 
 ```bash
 jgrep "composant navbar" --lang twig
@@ -248,11 +243,11 @@ Les fichiers PHP legacy mélangent souvent PHP, HTML et JavaScript dans le même
 
 ```json
 {
-  "chunkStrategy": "smart",
-  "rerank": true,
-  "rerankCandidates": 50,
-  "hybridSearch": true,
-  "maxPerFile": 3
+	"chunkStrategy": "smart",
+	"rerank": true,
+	"rerankCandidates": 50,
+	"hybridSearch": true,
+	"maxPerFile": 3
 }
 ```
 
@@ -262,9 +257,9 @@ Sur un petit corpus, le re-ranking et la recherche hybride ajoutent de la latenc
 
 ```json
 {
-  "chunkStrategy": "smart",
-  "rerank": false,
-  "hybridSearch": false
+	"chunkStrategy": "smart",
+	"rerank": false,
+	"hybridSearch": false
 }
 ```
 
@@ -274,11 +269,11 @@ Un monorepo mêle TypeScript, PHP et des noms de composants qui ne sont pas touj
 
 ```json
 {
-  "hybridSearch": true,
-  "rerank": true,
-  "rerankCandidates": 40,
-  "topK": 15,
-  "maxPerFile": 3
+	"hybridSearch": true,
+	"rerank": true,
+	"rerankCandidates": 40,
+	"topK": 15,
+	"maxPerFile": 3
 }
 ```
 
@@ -317,13 +312,13 @@ Retourne un tableau JSON minimal (sans le texte des chunks) :
 
 ```json
 [
-  {
-    "file": "src/Security/Authenticator.php",
-    "lang": "php",
-    "startLine": 12,
-    "endLine": 51,
-    "score": 0.87
-  }
+	{
+		"file": "src/Security/Authenticator.php",
+		"lang": "php",
+		"startLine": 12,
+		"endLine": 51,
+		"score": 0.87
+	}
 ]
 ```
 
@@ -339,10 +334,10 @@ Même structure avec un champ `text` supplémentaire contenant le code source du
 
 ### Codes de sortie
 
-| Code | Signification                                                    |
-|------|------------------------------------------------------------------|
-| `0`  | Succès — résultats retournés (ou index construit avec succès)    |
-| `1`  | Erreur — projet non initialisé, clé API manquante, autre erreur  |
+| Code | Signification                                                   |
+| ---- | --------------------------------------------------------------- |
+| `0`  | Succès — résultats retournés (ou index construit avec succès)   |
+| `1`  | Erreur — projet non initialisé, clé API manquante, autre erreur |
 
 ### Prérequis pour les agents
 
